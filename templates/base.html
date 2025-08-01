@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Django商城{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="{% url 'admin:index' %}" class="logo">Django商城</a>
+                <ul class="nav-links">
+                    <li><a href="{% url 'admin:index' %}">首页</a></li>
+                    <li><a href="{% url 'admin:index' %}">商品</a></li>
+                    <li><a href="{% url 'admin:index' %}">订单</a></li>
+                    <li><a href="{% url 'admin:index' %}">管理后台</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            {% block content %}
+            <div class="card">
+                <h1 class="card-title">欢迎使用Django商城</h1>
+                <p>这是一个基于Django的现代化电商平台。</p>
+                <div style="margin-top: 2rem;">
+                    <a href="{% url 'admin:index' %}" class="btn btn-primary">进入管理后台</a>
+                    <a href="/api/" class="btn btn-success">查看API文档</a>
+                </div>
+            </div>
+            {% endblock %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Django商城. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
