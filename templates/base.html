@@ -1,49 +1,180 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" ng-app="shopApp">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Django商城{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <header class="header">
-        <div class="container">
-            <nav class="nav">
-                <a href="{% url 'admin:index' %}" class="logo">Django商城</a>
-                <ul class="nav-links">
-                    <li><a href="{% url 'admin:index' %}">首页</a></li>
-                    <li><a href="{% url 'admin:index' %}">商品</a></li>
-                    <li><a href="{% url 'admin:index' %}">订单</a></li>
-                    <li><a href="{% url 'admin:index' %}">管理后台</a></li>
-                </ul>
-            </nav>
+<body ng-controller="MainController" class="modern-body">
+    <!-- 加载动画 -->
+    <div class="loading-overlay" ng-show="isLoading">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>加载中...</p>
         </div>
-    </header>
+    </div>
 
-    <main class="main">
-        <div class="container">
-            {% block content %}
-            <div class="card">
-                <h1 class="card-title">欢迎使用Django商城</h1>
-                <p>这是一个基于Django的现代化电商平台。</p>
-                <div style="margin-top: 2rem;">
-                    <a href="{% url 'admin:index' %}" class="btn btn-primary">进入管理后台</a>
-                    <a href="/api/" class="btn btn-success">查看API文档</a>
+    <!-- 通知容器 -->
+    <div class="notification-container"></div>
+
+    <!-- 侧边栏 -->
+    <div class="sidebar" ng-class="{'sidebar-open': sidebarOpen}">
+        <div class="sidebar-header">
+            <h3>Django商城</h3>
+            <button class="sidebar-close" ng-click="toggleSidebar()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/" class="sidebar-link" ng-click="goToHome(); toggleSidebar()">
+                <i class="fas fa-home"></i> 首页
+            </a>
+            <a href="#" class="sidebar-link" ng-click="goToProducts(); toggleSidebar()">
+                <i class="fas fa-shopping-bag"></i> 商品
+            </a>
+            <a href="#" class="sidebar-link" ng-click="goToOrders(); toggleSidebar()">
+                <i class="fas fa-list"></i> 订单
+            </a>
+            <a href="/admin/" class="sidebar-link" target="_blank">
+                <i class="fas fa-cog"></i> 管理后台
+            </a>
+            <div class="sidebar-divider"></div>
+            <a href="#" class="sidebar-link" ng-if="!isLoggedIn" ng-click="showLogin(); toggleSidebar()">
+                <i class="fas fa-sign-in-alt"></i> 登录
+            </a>
+            <a href="#" class="sidebar-link" ng-if="isLoggedIn" ng-click="logout(); toggleSidebar()">
+                <i class="fas fa-sign-out-alt"></i> 退出
+            </a>
+        </nav>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-wrapper" ng-class="{'sidebar-open': sidebarOpen}">
+        <header class="header">
+            <div class="container">
+                <nav class="nav">
+                    <button class="mobile-menu-btn" ng-click="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <a href="/" class="logo">
+                        <i class="fas fa-store"></i>
+                        <span>Django商城</span>
+                    </a>
+                    
+                    <div class="nav-center">
+                        <div class="search-container">
+                            <input type="text" class="search-input" placeholder="搜索商品..." 
+                                   ng-model="searchQuery" ng-keyup="$event.keyCode === 13 && searchProducts()">
+                            <button class="search-btn" ng-click="searchProducts()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <ul class="nav-links">
+                        <li><a href="/" ng-click="goToHome()" class="nav-link">
+                            <i class="fas fa-home"></i> 首页
+                        </a></li>
+                        <li><a href="#" ng-click="goToProducts()" class="nav-link">
+                            <i class="fas fa-shopping-bag"></i> 商品
+                        </a></li>
+                        <li><a href="#" ng-click="goToOrders()" class="nav-link">
+                            <i class="fas fa-list"></i> 订单
+                        </a></li>
+                        <li class="cart-icon">
+                            <a href="#" ng-click="showCart()" class="nav-link">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span class="cart-badge" ng-if="cartItemCount > 0">{% verbatim %}{{ cartItemCount }}{% endverbatim %}</span>
+                            </a>
+                        </li>
+                        <li ng-if="!isLoggedIn"><a href="#" ng-click="showLogin()" class="nav-link">
+                            <i class="fas fa-sign-in-alt"></i> 登录
+                        </a></li>
+                        <li ng-if="isLoggedIn" class="user-menu">
+                            <a href="#" ng-click="toggleUserMenu()" class="nav-link">
+                                <i class="fas fa-user"></i> {% verbatim %}{{ currentUser.username || '用户' }}{% endverbatim %}
+                                <i class="fas fa-chevron-down"></i>
+                            </a>
+                            <div class="user-dropdown" ng-show="userMenuOpen">
+                                <a href="#" ng-click="showProfile()">个人资料</a>
+                                <a href="#" ng-click="showOrders()">我的订单</a>
+                                <a href="#" ng-click="logout()">退出登录</a>
+                            </div>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="container">
+                {% block content %}
+                <div class="hero-section">
+                    <div class="hero-content">
+                        <h1 class="hero-title">欢迎来到Django商城</h1>
+                        <p class="hero-subtitle">这是一个基于Django + AngularJS的现代化电商平台</p>
+                        <div class="hero-buttons">
+                            <a href="/admin/" class="btn btn-primary btn-lg">
+                                <i class="fas fa-cog"></i> 进入管理后台
+                            </a>
+                            <a href="/api/" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-code"></i> 查看API文档
+                            </a>
+                        </div>
+                    </div>
+                    <div class="hero-image">
+                        <i class="fas fa-shopping-cart fa-6x"></i>
+                    </div>
+                </div>
+                {% endblock %}
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h4>关于我们</h4>
+                        <p>Django商城是一个现代化的电商平台，提供优质的购物体验。</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>快速链接</h4>
+                        <ul>
+                            <li><a href="/">首页</a></li>
+                            <li><a href="/admin/">管理后台</a></li>
+                            <li><a href="/api/">API文档</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>联系我们</h4>
+                        <p><i class="fas fa-envelope"></i> contact@djangoshop.com</p>
+                        <p><i class="fas fa-phone"></i> +86 123 4567 8900</p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2024 Django商城. 保留所有权利.</p>
                 </div>
             </div>
-            {% endblock %}
-        </div>
-    </main>
+        </footer>
+    </div>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 Django商城. 保留所有权利.</p>
-        </div>
-    </footer>
-
+    <!-- AngularJS -->
+    <script src="{% static 'js/lib/angular.min.js' %}"></script>
+    <script src="{% static 'js/lib/angular-route.min.js' %}"></script>
+    <script src="{% static 'js/lib/angular-resource.min.js' %}"></script>
+    <script src="{% static 'js/lib/angular-animate.min.js' %}"></script>
+    
+    <!-- 自定义JavaScript -->
+    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/controllers.js' %}"></script>
+    <script src="{% static 'js/services.js' %}"></script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html> 

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div ng-controller="TestController">
+    <div class="card">
+        <h2>AngularJS 测试页面</h2>
+        <p>当前时间: {% verbatim %}{{ currentTime }}{% endverbatim %}</p>
+        <p>消息: {% verbatim %}{{ message }}{% endverbatim %}</p>
+        <button class="btn btn-primary" ng-click="updateTime()">更新时间</button>
+        <button class="btn btn-success" ng-click="changeMessage()">改变消息</button>
+    </div>
+    
+    <div class="card" style="margin-top: 2rem;">
+        <h3>API 测试</h3>
+        <button class="btn btn-info" ng-click="testAPI()">测试 API 连接</button>
+        <div ng-if="apiResult">
+            <pre>{% verbatim %}{{ apiResult | json }}{% endverbatim %}</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 测试控制器
+shopApp.controller('TestController', ['$scope', '$http', 'API_BASE_URL', function($scope, $http, API_BASE_URL) {
+    $scope.currentTime = new Date().toLocaleString();
+    $scope.message = 'Hello AngularJS!';
+    $scope.apiResult = null;
+    
+    $scope.updateTime = function() {
+        $scope.currentTime = new Date().toLocaleString();
+    };
+    
+    $scope.changeMessage = function() {
+        $scope.message = '消息已更新: ' + new Date().toLocaleTimeString();
+    };
+    
+    $scope.testAPI = function() {
+        $http.get(API_BASE_URL)
+            .then(function(response) {
+                $scope.apiResult = response.data;
+            })
+            .catch(function(error) {
+                $scope.apiResult = { error: error.data || 'API 连接失败' };
+            });
+    };
+}]);
+</script>
+{% endblock %} 
