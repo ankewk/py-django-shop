@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue测试页面</title>
+    {% load static %}
+    
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="{% static 'css/element-ui/index.css' %}">
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body>
+    <div id="app">
+        <el-container>
+            <el-header>
+                <h1>Vue测试页面</h1>
+            </el-header>
+            <el-main>
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-card>
+                            <div slot="header">
+                                <span>Vue状态</span>
+                            </div>
+                            <p>Vue版本: {{ vueVersion }}</p>
+                            <p>Element UI版本: {{ elementVersion }}</p>
+                            <p>当前时间: {{ currentTime }}</p>
+                            <p>Vue是否可用: {{ vueAvailable }}</p>
+                        </el-card>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-card>
+                            <div slot="header">
+                                <span>功能测试</span>
+                            </div>
+                            <el-button type="primary" @click="showMessage">消息测试</el-button>
+                            <el-button type="success" @click="showNotification">通知测试</el-button>
+                            <el-button type="warning" @click="showConfirm">确认测试</el-button>
+                            <el-button type="info" @click="showAlert">警告测试</el-button>
+                        </el-card>
+                    </el-col>
+                </el-row>
+                
+                <el-row :gutter="20" style="margin-top: 20px;">
+                    <el-col :span="24">
+                        <el-card>
+                            <div slot="header">
+                                <span>控制台日志</span>
+                            </div>
+                            <div id="console-log" style="background: #f5f5f5; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace;">
+                                <p>等待Vue初始化...</p>
+                            </div>
+                        </el-card>
+                    </el-col>
+                </el-row>
+            </el-main>
+        </el-container>
+    </div>
+
+    <!-- Vue.js -->
+    <script src="{% static 'js/lib/vue/vue.js' %}"></script>
+    <!-- Element UI JS -->
+    <script src="{% static 'js/lib/element-ui.js' %}"></script>
+    
+    <script>
+        // 重写console.log来显示在页面上
+        var originalLog = console.log;
+        var originalError = console.error;
+        var logContainer = document.getElementById('console-log');
+        
+        function addLog(message, type) {
+            var logElement = document.createElement('p');
+            logElement.style.color = type === 'error' ? 'red' : 'black';
+            logElement.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            logContainer.appendChild(logElement);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        console.log = function(message) {
+            originalLog.apply(console, arguments);
+            addLog(message, 'log');
+        };
+        
+        console.error = function(message) {
+            originalError.apply(console, arguments);
+            addLog(message, 'error');
+        };
+        
+        // 等待页面加载完成
+        window.addEventListener('load', function() {
+            console.log('Window loaded, checking Vue...');
+            
+            // 检查Vue是否可用
+            if (typeof Vue === 'undefined') {
+                console.error('Vue is not defined!');
+                return;
+            }
+            
+            console.log('Vue is available, creating app...');
+            
+            try {
+                new Vue({
+                    el: '#app',
+                    data: {
+                        vueVersion: Vue.version,
+                        elementVersion: '2.15.13',
+                        currentTime: new Date().toLocaleString(),
+                        vueAvailable: '是'
+                    },
+                    methods: {
+                        showMessage() {
+                            this.$message.success('Vue工作正常！');
+                        },
+                        showNotification() {
+                            this.$notify({
+                                title: '成功',
+                                message: '这是一个成功通知',
+                                type: 'success'
+                            });
+                        },
+                        showConfirm() {
+                            this.$confirm('这是一个确认对话框', '提示', {
+                                confirmButtonText: '确定',
+                                cancelButtonText: '取消',
+                                type: 'warning'
+                            }).then(() => {
+                                this.$message.success('您点击了确定');
+                            }).catch(() => {
+                                this.$message.info('您点击了取消');
+                            });
+                        },
+                        showAlert() {
+                            this.$alert('这是一个警告对话框', '警告', {
+                                confirmButtonText: '确定',
+                                type: 'warning'
+                            });
+                        }
+                    },
+                    mounted() {
+                        console.log('Vue app mounted successfully');
+                        this.$message.success('Vue测试页面加载成功！');
+                    }
+                });
+                
+                console.log('Vue app created successfully');
+                
+            } catch (error) {
+                console.error('Vue initialization error:', error);
+            }
+        });
+        
+        // 备用初始化方法
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, checking Vue again...');
+            
+            if (typeof Vue !== 'undefined') {
+                console.log('Vue found on DOMContentLoaded');
+            } else {
+                console.error('Vue still not available on DOMContentLoaded');
+            }
+        });
+    </script>
+</body>
+</html> 

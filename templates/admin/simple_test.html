@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue简单测试</title>
+    {% load static %}
+    
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="{% static 'css/element-ui/index.css' %}">
+</head>
+<body>
+    <div id="app">
+        <h1>{{ message }}</h1>
+        <el-button type="primary" @click="showMessage">点击测试</el-button>
+        <p>Vue版本: {{ vueVersion }}</p>
+    </div>
+
+    <!-- Vue.js -->
+    <script src="{% static 'js/lib/vue/vue.js' %}"></script>
+    <!-- Element UI JS -->
+    <script src="{% static 'js/lib/element-ui.js' %}"></script>
+    
+    <script>
+        // 等待页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing Vue...');
+            
+            // 检查Vue是否可用
+            if (typeof Vue === 'undefined') {
+                console.error('Vue is not defined!');
+                document.getElementById('app').innerHTML = '<h1>Vue加载失败</h1>';
+                return;
+            }
+            
+            console.log('Vue is available, creating app...');
+            
+            new Vue({
+                el: '#app',
+                data: {
+                    message: 'Vue测试页面',
+                    vueVersion: Vue.version
+                },
+                methods: {
+                    showMessage() {
+                        this.$message.success('Vue工作正常！');
+                    }
+                },
+                mounted() {
+                    console.log('Vue app mounted successfully');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

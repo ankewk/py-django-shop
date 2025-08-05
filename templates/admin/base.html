@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Django商城后台管理{% endblock %}</title>
+    {% load static %}
+    
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="{% static 'css/element-ui/index.css' %}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航栏 -->
+        <el-header class="admin-header">
+            <div class="header-left">
+                <i class="el-icon-s-fold" @click="toggleSidebar"></i>
+                <h2>Django商城后台管理</h2>
+            </div>
+            <div class="header-right">
+                <el-dropdown @command="handleCommand">
+                    <span class="el-dropdown-link">
+                        <i class="el-icon-user"></i>
+                        管理员 <i class="el-icon-arrow-down el-icon--right"></i>
+                    </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="profile">个人资料</el-dropdown-item>
+                        <el-dropdown-item command="settings">系统设置</el-dropdown-item>
+                        <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+            </div>
+        </el-header>
+
+        <!-- 侧边栏 -->
+        <el-aside :width="sidebarWidth" class="admin-sidebar">
+            <el-menu
+                :default-active="activeMenu"
+                class="sidebar-menu"
+                :collapse="isCollapse"
+                background-color="#304156"
+                text-color="#bfcbd9"
+                active-text-color="#409EFF">
+                
+                <el-menu-item index="/admin/" @click="navigateTo('/admin/')">
+                    <i class="el-icon-s-home"></i>
+                    <span slot="title">控制台</span>
+                </el-menu-item>
+                
+                <el-submenu index="products">
+                    <template slot="title">
+                        <i class="el-icon-goods"></i>
+                        <span>商品管理</span>
+                    </template>
+                    <el-menu-item index="/admin/products/product/" @click="navigateTo('/admin/products/product/')">
+                        <i class="el-icon-shopping-bag-1"></i>
+                        <span>商品列表</span>
+                    </el-menu-item>
+                    <el-menu-item index="/admin/products/category/" @click="navigateTo('/admin/products/category/')">
+                        <i class="el-icon-collection-tag"></i>
+                        <span>分类管理</span>
+                    </el-menu-item>
+                </el-submenu>
+                
+                <el-submenu index="orders">
+                    <template slot="title">
+                        <i class="el-icon-s-order"></i>
+                        <span>订单管理</span>
+                    </template>
+                    <el-menu-item index="/admin/orders/order/" @click="navigateTo('/admin/orders/order/')">
+                        <i class="el-icon-shopping-cart-2"></i>
+                        <span>订单列表</span>
+                    </el-menu-item>
+                    <el-menu-item index="/admin/orders/orderitem/" @click="navigateTo('/admin/orders/orderitem/')">
+                        <i class="el-icon-shopping-cart-1"></i>
+                        <span>订单项</span>
+                    </el-menu-item>
+                </el-submenu>
+                
+                <el-submenu index="users">
+                    <template slot="title">
+                        <i class="el-icon-user"></i>
+                        <span>用户管理</span>
+                    </template>
+                    <el-menu-item index="/admin/auth/user/" @click="navigateTo('/admin/auth/user/')">
+                        <i class="el-icon-s-custom"></i>
+                        <span>用户列表</span>
+                    </el-menu-item>
+                    <el-menu-item index="/admin/auth/group/" @click="navigateTo('/admin/auth/group/')">
+                        <i class="el-icon-s-management"></i>
+                        <span>用户组</span>
+                    </el-menu-item>
+                </el-submenu>
+                
+                <el-menu-item index="/admin/sessions/session/" @click="navigateTo('/admin/sessions/session/')">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">会话管理</span>
+                </el-menu-item>
+            </el-menu>
+        </el-aside>
+
+        <!-- 主内容区域 -->
+        <el-main class="admin-main">
+            <el-breadcrumb separator="/" class="breadcrumb">
+                <el-breadcrumb-item :to="{ path: '/admin/' }">首页</el-breadcrumb-item>
+                <el-breadcrumb-item v-for="item in breadcrumbs" :key="item.path" :to="item.path">
+                    {{ item.name }}
+                </el-breadcrumb-item>
+            </el-breadcrumb>
+            
+            <div class="content-wrapper">
+                {% block content %}
+                <!-- 默认内容 -->
+                <div class="dashboard">
+                    <el-row :gutter="20">
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-content">
+                                    <div class="stat-icon">
+                                        <i class="el-icon-goods"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-number">{{ product_count|default:"0" }}</div>
+                                        <div class="stat-label">商品总数</div>
+                                    </div>
+                                </div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-content">
+                                    <div class="stat-icon">
+                                        <i class="el-icon-s-order"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-number">{{ order_count|default:"0" }}</div>
+                                        <div class="stat-label">订单总数</div>
+                                    </div>
+                                </div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-content">
+                                    <div class="stat-icon">
+                                        <i class="el-icon-user"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-number">{{ user_count|default:"0" }}</div>
+                                        <div class="stat-label">用户总数</div>
+                                    </div>
+                                </div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-content">
+                                    <div class="stat-icon">
+                                        <i class="el-icon-money"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-number">{{ revenue|default:"¥0" }}</div>
+                                        <div class="stat-label">总收入</div>
+                                    </div>
+                                </div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+                    
+                    <el-row :gutter="20" style="margin-top: 20px;">
+                        <el-col :span="12">
+                            <el-card>
+                                <div slot="header">
+                                    <span>最近订单</span>
+                                </div>
+                                <el-table :data="recentOrders" style="width: 100%">
+                                    <el-table-column prop="id" label="订单号" width="80"></el-table-column>
+                                    <el-table-column prop="status" label="状态" width="100">
+                                        <template slot-scope="scope">
+                                            <el-tag :type="getStatusType(scope.row.status)">
+                                                {{ scope.row.status }}
+                                            </el-tag>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="total" label="金额" width="100"></el-table-column>
+                                    <el-table-column prop="created_at" label="创建时间"></el-table-column>
+                                </el-table>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-card>
+                                <div slot="header">
+                                    <span>系统信息</span>
+                                </div>
+                                <el-descriptions :column="1" border>
+                                    <el-descriptions-item label="Django版本">4.2.7</el-descriptions-item>
+                                    <el-descriptions-item label="Python版本">3.8+</el-descriptions-item>
+                                    <el-descriptions-item label="数据库">MySQL</el-descriptions-item>
+                                    <el-descriptions-item label="服务器时间">{{ server_time }}</el-descriptions-item>
+                                </el-descriptions>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+                </div>
+                {% endblock %}
+            </div>
+        </el-main>
+    </div>
+
+    <!-- Vue.js -->
+    <script src="{% static 'js/lib/vue/vue.js' %}"></script>
+    <!-- Element UI JS -->
+    <script src="{% static 'js/lib/element-ui.js' %}"></script>
+    <!-- 自定义JS -->
+    <script src="{% static 'js/admin.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
